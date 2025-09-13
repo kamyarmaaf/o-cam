@@ -1,0 +1,199 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Iran Sans', sans-serif;
+}
+
+body {
+  direction: rtl;
+  background: linear-gradient(135deg, #D1F8EF 0%, #A1E3F9 10%, #ffffff 50%, #D1F8EF 100%);
+  color: #1F2937;
+  min-height: 100vh;
+}
+
+.btn-primary {
+  @apply bg-gradient-primary text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-card transform hover:scale-105 transition-all duration-300;
+}
+
+.btn-secondary {
+  @apply bg-white text-primary border-2 border-primary px-8 py-4 rounded-2xl font-semibold hover:bg-primary hover:text-white transition-all duration-300;
+}
+
+.card {
+  @apply bg-white/90 backdrop-blur-lg rounded-3xl shadow-card p-8 border border-white/30;
+}
+
+.card-gradient {
+  @apply bg-gradient-card rounded-3xl shadow-card p-8 border border-white/30;
+}
+
+.input-field {
+  @apply w-full px-6 py-4 border-2 border-accent/30 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/90 backdrop-blur-sm;
+  text-align: right;
+  direction: rtl;
+}
+
+/* RTL Select styling */
+select.input-field {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: left 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-left: 2.5rem;
+  appearance: none;
+}
+
+/* Resizable dashboard */
+.resizable-sidebar {
+  resize: horizontal;
+  overflow: auto;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.hero-section {
+  @apply bg-gradient-hero text-white relative overflow-hidden;
+}
+
+.floating-element {
+  @apply absolute animate-bounce;
+}
+
+.glass-effect {
+  @apply bg-white/10 backdrop-blur-lg border border-white/20;
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-rotate {
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
+
+@keyframes sway {
+  0%, 100% { transform: translateX(0px) rotate(-2deg); }
+  50% { transform: translateX(10px) rotate(2deg); }
+}
+
+.animate-sway {
+  animation: sway 6s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Animation for slide in */
+@keyframes slide-in-from-top {
+  0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+  100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+@keyframes slide-in-from-bottom {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.slide-in-from-top {
+  animation: slide-in-from-top 0.5s ease-out;
+}
+
+.slide-in-from-bottom {
+  animation: slide-in-from-bottom 0.5s ease-out;
+}
+
+/* Educational Background Elements */
+.educational-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.educational-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #3674B5 0%, #578FCA 50%, #A1E3F9 100%);
+  z-index: 1;
+}
+
+.educational-element {
+  position: absolute;
+  z-index: 2;
+  opacity: 0.1;
+  color: white;
+  font-size: 2rem;
+  pointer-events: none;
+}
+
+.educational-element.pencil {
+  font-size: 3rem;
+  opacity: 0.15;
+}
+
+.educational-element.book {
+  font-size: 2.5rem;
+  opacity: 0.12;
+}
+
+.educational-element.calculator {
+  font-size: 2.2rem;
+  opacity: 0.13;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #D1F8EF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3674B5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #578FCA;
+}
