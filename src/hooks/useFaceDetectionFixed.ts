@@ -1,4 +1,4 @@
-// hooks/useFaceDetection.ts
+// hooks/useFaceDetectionFixed.ts - Fixed version for reference face capture
 import { useRef, useEffect, useState, useCallback } from 'react';
 import * as faceapi from 'face-api.js';
 import * as tf from '@tensorflow/tfjs';
@@ -50,7 +50,7 @@ type DetectionResult = {
   distance?: number;
 };
 
-export const useFaceDetection = (
+export const useFaceDetectionFixed = (
   enabled: boolean = false,
   options: UseFaceDetectionOptions = {}
 ): UseFaceDetectionReturn => {
@@ -87,6 +87,10 @@ export const useFaceDetection = (
   const isMonitoringRef = useRef<boolean>(false);
   useEffect(() => { isMonitoringRef.current = isMonitoring; }, [isMonitoring]);
 
+  const addLog = (message: string) => {
+    console.log(`[FaceDetectionFixed] ${message}`);
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -106,11 +110,6 @@ export const useFaceDetection = (
       }
     })();
   }, []);
-
-  // Helper function to add logs
-  const addLog = (message: string) => {
-    console.log(`[FaceDetection] ${message}`);
-  };
 
   const loadModels = useCallback(async () => {
     try {
@@ -143,7 +142,6 @@ export const useFaceDetection = (
     }
   }, []);
 
-  // ویدیو را «واقعاً» آماده کن - نسخه بهبود یافته
   const waitForVideoReady = useCallback(async (timeoutMs = 10000): Promise<boolean> => {
     const video = videoRef.current;
     const stream = streamRef.current;
@@ -152,7 +150,6 @@ export const useFaceDetection = (
       return false;
     }
 
-    // مطمئن شو ویژگی‌های ضروری روی تگ ست شده‌اند
     (video as any).playsInline = true;
     video.muted = true;
 
@@ -167,7 +164,6 @@ export const useFaceDetection = (
 
     addLog('در حال انتظار برای آماده شدن ویدیو...');
 
-    // یک تلاش مجدد برای play
     try { 
       await video.play(); 
       addLog('✅ video.play() موفق بود');
@@ -183,7 +179,7 @@ export const useFaceDetection = (
     return await new Promise<boolean>((resolve) => {
       let settled = false;
       let attempts = 0;
-      const maxAttempts = 50; // 5 ثانیه با فاصله 100ms
+      const maxAttempts = 50;
 
       const checkReady = () => {
         if (settled) return;
@@ -192,55 +188,20 @@ export const useFaceDetection = (
         if (isReady()) {
           addLog(`✅ ویدیو بعد از ${attempts} تلاش آماده شد`);
           settled = true;
-          cleanup();
           resolve(true);
           return;
         }
 
         if (attempts >= maxAttempts) {
           addLog(`❌ ویدیو بعد از ${attempts} تلاش آماده نشد`);
-          addLog(`وضعیت نهایی: readyState=${video.readyState}, width=${video.videoWidth}, height=${video.videoHeight}, paused=${video.paused}`);
           settled = true;
-          cleanup();
           resolve(false);
           return;
         }
 
-        // ادامه بررسی
         setTimeout(checkReady, 100);
       };
 
-      const cleanup = () => {
-        ['loadedmetadata','loadeddata','canplay','playing','resize'].forEach(ev => {
-          video.removeEventListener(ev, onReady);
-        });
-        const track = stream.getVideoTracks()[0];
-        if (track && (track as any).removeEventListener) {
-          (track as any).removeEventListener('unmute', onReady as any);
-        }
-      };
-
-      const onReady = () => {
-        if (settled) return;
-        if (isReady()) {
-          addLog('✅ ویدیو از طریق رویداد آماده شد');
-          settled = true;
-          cleanup();
-          resolve(true);
-        }
-      };
-
-      ['loadedmetadata','loadeddata','canplay','playing','resize'].forEach(ev => {
-        video.addEventListener(ev, onReady);
-      });
-
-      // بعضی مرورگرها (Safari) با unmute ترک ویدیو آماده می‌شوند
-      const track = stream.getVideoTracks()[0];
-      if (track && (track as any).addEventListener) {
-        (track as any).addEventListener('unmute', onReady as any, { once: true });
-      }
-
-      // شروع بررسی دوره‌ای
       setTimeout(checkReady, 100);
     });
   }, []);
@@ -308,43 +269,34 @@ export const useFaceDetection = (
   const detectOnce = useCallback(async (): Promise<DetectionResult> => {
     const video = videoRef.current;
     
-    // Enhanced readiness check
-    if (!video) {
-      addLog('❌ عنصر ویدیو وجود ندارد');
+    if (!video || !isModelsLoaded || video.videoWidth === 0 || video.videoHeight === 0) {
+      addLog('❌ ویدیو یا مدل‌ها آماده نیستند');
       return { faceCount: 0, violationType: null, distance: undefined };
     }
-    
-    if (!isModelsLoaded) {
-      addLog('❌ مدل‌ها هنوز بارگذاری نشده‌اند');
-      return { faceCount: 0, violationType: null, distance: undefined };
-    }
-    
-    // More thorough video readiness check
-    if (video.readyState < 2) { // HAVE_CURRENT_DATA or better
+
+    if (video.readyState < 2) {
       addLog('❌ ویدیو هنوز آماده نیست (readyState: ' + video.readyState + ')');
       return { faceCount: 0, violationType: null, distance: undefined };
     }
     
     if (video.videoWidth === 0 || video.videoHeight === 0) {
-      addLog('❌ ابعاد ویدیو صفر است (width: ' + video.videoWidth + ', height: ' + video.videoHeight + ')');
+      addLog('❌ ابعاد ویدیو صفر است');
       return { faceCount: 0, violationType: null, distance: undefined };
     }
 
-    // Check if video is actually playing
     if (video.paused || video.ended) {
-      addLog('❌ ویدیو در حال پخش نیست (paused: ' + video.paused + ', ended: ' + video.ended + ')');
+      addLog('❌ ویدیو در حال پخش نیست');
       return { faceCount: 0, violationType: null, distance: undefined };
     }
 
     try {
       addLog('در حال تشخیص چهره...');
       
-      // Add a small delay to ensure video frame is ready
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const options = new faceapi.TinyFaceDetectorOptions({ 
         inputSize: 320, 
-        scoreThreshold: 0.3 // Lower threshold for better detection
+        scoreThreshold: 0.3 
       });
       
       const results = await faceapi
@@ -387,7 +339,6 @@ export const useFaceDetection = (
       return { faceCount: 1, violationType: null, distance: undefined };
     } catch (error) {
       addLog('❌ خطا در تشخیص چهره: ' + error);
-      // Return a non-error result to allow retry
       return { faceCount: 0, violationType: null, distance: undefined };
     }
   }, [isModelsLoaded, threshold, drawOverlayBoxes]);
@@ -399,6 +350,7 @@ export const useFaceDetection = (
     return canvas.toDataURL('image/jpeg', 0.8);
   }, [drawFrameToCanvas]);
 
+  // FIXED VERSION - Much more robust reference face capture
   const captureReferenceFace = useCallback(async (): Promise<boolean> => {
     const video = videoRef.current;
     if (!video || !isModelsLoaded) {
@@ -408,12 +360,10 @@ export const useFaceDetection = (
 
     addLog('در حال تلاش برای ثبت چهره مرجع...');
 
-    // Enhanced video readiness check
     if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
       addLog('❌ ویدیو برای ثبت چهره مرجع آماده نیست');
       addLog(`وضعیت: readyState=${video.readyState}, width=${video.videoWidth}, height=${video.videoHeight}`);
       
-      // Try to wait for video to be ready
       addLog('در حال انتظار برای آماده شدن ویدیو...');
       const ready = await waitForVideoReady(5000);
       if (!ready) {
@@ -423,41 +373,121 @@ export const useFaceDetection = (
     }
 
     try {
-      // Add small delay to ensure video frame is stable
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       addLog('در حال تشخیص چهره برای ثبت مرجع...');
-      const options = new faceapi.TinyFaceDetectorOptions({ 
-        inputSize: 320, 
-        scoreThreshold: 0.3 
-      });
       
-      const detection = await faceapi
-        .detectSingleFace(video, options)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
+      // Try multiple approaches for better detection
+      let detection = null;
+      let allDetections = [];
+      
+      // Approach 1: Try with very low threshold
+      try {
+        const options1 = new faceapi.TinyFaceDetectorOptions({ 
+          inputSize: 320, 
+          scoreThreshold: 0.15 // Very low threshold
+        });
+        
+        allDetections = await faceapi
+          .detectAllFaces(video, options1)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+        
+        addLog(`تعداد چهره‌های شناسایی شده (آستانه بسیار پایین): ${allDetections.length}`);
+        
+        if (allDetections.length === 1) {
+          detection = allDetections[0];
+          addLog(`✅ یک چهره با امتیاز ${detection.detection.score.toFixed(3)} شناسایی شد`);
+        } else if (allDetections.length > 1) {
+          // If multiple faces, take the one with highest confidence
+          detection = allDetections.reduce((prev, current) => 
+            prev.detection.score > current.detection.score ? prev : current
+          );
+          addLog(`✅ بهترین چهره از بین ${allDetections.length} چهره انتخاب شد (امتیاز: ${detection.detection.score.toFixed(3)})`);
+        }
+      } catch (e1) {
+        addLog('❌ خطا در تشخیص با آستانه پایین: ' + e1);
+      }
+
+      // Approach 2: If no detection, try with larger input size
+      if (!detection) {
+        try {
+          addLog('در حال تلاش با سایز ورودی بزرگتر...');
+          const options2 = new faceapi.TinyFaceDetectorOptions({ 
+            inputSize: 416, 
+            scoreThreshold: 0.2
+          });
+          
+          allDetections = await faceapi
+            .detectAllFaces(video, options2)
+            .withFaceLandmarks()
+            .withFaceDescriptors();
+          
+          addLog(`تعداد چهره‌های شناسایی شده (سایز بزرگتر): ${allDetections.length}`);
+          
+          if (allDetections.length > 0) {
+            detection = allDetections[0];
+            addLog(`✅ چهره با سایز بزرگتر شناسایی شد (امتیاز: ${detection.detection.score.toFixed(3)})`);
+          }
+        } catch (e2) {
+          addLog('❌ خطا در تشخیص با سایز بزرگتر: ' + e2);
+        }
+      }
+
+      // Approach 3: Last resort - try different settings
+      if (!detection) {
+        try {
+          addLog('در حال تلاش با تنظیمات جایگزین...');
+          const options3 = new faceapi.TinyFaceDetectorOptions({ 
+            inputSize: 320, 
+            scoreThreshold: 0.1 // Extremely low threshold
+          });
+          
+          const basicDetections = await faceapi.detectAllFaces(video, options3);
+          addLog(`تعداد چهره‌های پایه شناسایی شده: ${basicDetections.length}`);
+          
+          if (basicDetections.length > 0) {
+            // Try to get full detection for the first face
+            const optionsFull = new faceapi.TinyFaceDetectorOptions({ 
+              inputSize: 320, 
+              scoreThreshold: 0.1
+            });
+            
+            const fullDetections = await faceapi
+              .detectAllFaces(video, optionsFull)
+              .withFaceLandmarks()
+              .withFaceDescriptors();
+            
+            if (fullDetections.length > 0) {
+              detection = fullDetections[0];
+              addLog(`✅ چهره با روش جایگزین شناسایی شد (امتیاز: ${detection.detection.score.toFixed(3)})`);
+            }
+          }
+        } catch (e3) {
+          addLog('❌ خطا در تشخیص با روش جایگزین: ' + e3);
+        }
+      }
 
       if (detection?.descriptor) {
         setReferenceFace(detection.descriptor);
         referenceFaceRef.current = detection.descriptor;
         addLog('✅ چهره مرجع با موفقیت ثبت شد');
         addLog(`اندازه دیسکریپتور: ${detection.descriptor.length}`);
+        addLog(`امتیاز تشخیص: ${detection.detection.score.toFixed(3)}`);
         return true;
       } else {
         addLog('❌ هیچ چهره‌ای برای ثبت مرجع شناسایی نشد');
         
-        // Try to get more information about why detection failed
-        const allDetections = await faceapi
-          .detectAllFaces(video, options)
-          .withFaceLandmarks()
-          .withFaceDescriptors();
-          
-        addLog(`تعداد کل چهره‌های شناسایی شده: ${allDetections.length}`);
-        
         if (allDetections.length === 0) {
-          addLog('هیچ چهره‌ای در تصویر پیدا نشد - لطفاً مطمئن شوید چهره شما در دوربین قابل مشاهده است');
+          addLog('هیچ چهره‌ای در تصویر پیدا نشد');
+          addLog('راهنمایی:');
+          addLog('- مطمئن شوید چهره شما در دوربین قابل مشاهده است');
+          addLog('- نور محیط را مناسب کنید');
+          addLog('- صورت خود را مستقیماً به دوربین نگه دارید');
+          addLog('- فاصله خود را از دوربین تنظیم کنید (حدود 50-100 سانتی‌متر)');
         } else if (allDetections.length > 1) {
-          addLog('چندین چهره شناسایی شد - لطفاً فقط یک نفر در تصویر باشد');
+          addLog(`چندین چهره (${allDetections.length}) شناسایی شد`);
+          addLog('لطفاً فقط یک نفر در تصویر باشد');
         }
         
         return false;
@@ -486,7 +516,11 @@ export const useFaceDetection = (
       if (!streamRef.current) {
         addLog('در حال درخواست دسترسی به دوربین...');
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          video: { 
+            width: { ideal: 640 }, 
+            height: { ideal: 480 }, 
+            facingMode: 'user' 
+          },
           audio: false,
         });
         streamRef.current = stream;
@@ -494,25 +528,58 @@ export const useFaceDetection = (
       }
 
       if (videoRef.current) {
-        // اطمینان از ویژگی‌ها
         (videoRef.current as any).playsInline = true;
         videoRef.current.muted = true;
+        videoRef.current.autoplay = true;
+
+        if (videoRef.current.srcObject) {
+          const oldStream = videoRef.current.srcObject as MediaStream;
+          oldStream.getTracks().forEach(track => track.stop());
+        }
 
         videoRef.current.srcObject = streamRef.current;
         addLog('در حال تنظیم ویدیو...');
         
-        try {
-          await videoRef.current.play();
-          addLog('✅ ویدیو با موفقیت شروع به پخش کرد');
-        } catch (e) {
-          addLog('❌ خطا در پخش ویدیو: ' + e);
+        videoRef.current.load();
+        
+        let playAttempts = 0;
+        const maxPlayAttempts = 5;
+        
+        const tryPlay = async (): Promise<boolean> => {
+          try {
+            addLog(`تلاش برای پخش ویدیو (تلاش ${playAttempts + 1})...`);
+            await videoRef.current!.play();
+            addLog('✅ ویدیو با موفقیت شروع به پخش کرد');
+            return true;
+          } catch (e) {
+            playAttempts++;
+            addLog(`❌ خطا در پخش ویدیو (تلاش ${playAttempts}): ${e}`);
+            
+            if (playAttempts < maxPlayAttempts) {
+              addLog('در حال انتظار برای تلاش مجدد...');
+              await new Promise(resolve => setTimeout(resolve, 500));
+              return tryPlay();
+            }
+            return false;
+          }
+        };
+
+        const playSuccess = await tryPlay();
+        
+        if (!playSuccess) {
+          addLog('❌ تمام تلاش‌ها برای پخش ویدیو ناموفق بود');
+          setCameraError(true);
+          setIsInitialized(false);
+          return;
         }
         
-        const ready = await waitForVideoReady();
+        addLog('در حال انتظار برای آماده شدن ویدیو...');
+        const ready = await waitForVideoReady(15000);
+        
         if (ready) {
-          addLog('✅ ویدیو آماده است');
+          addLog('✅ ویدیو کاملاً آماده است');
         } else {
-          addLog('❌ ویدیو آماده نشد');
+          addLog('❌ ویدیو پس از انتظار طولانی آماده نشد');
         }
       }
       
@@ -537,7 +604,6 @@ export const useFaceDetection = (
 
           const result = await detectOnce();
           
-          // Reset failure counter on successful detection
           if (result.faceCount > 0 || result.violationType === 'no_face') {
             consecutiveFailures = 0;
           }
@@ -553,7 +619,7 @@ export const useFaceDetection = (
                 timestamp: new Date(),
                 faceCount: result.faceCount,
                 screenshot,
-                type: result.violationType!, // اینجا null نیست
+                type: result.violationType!,
                 ...(result.distance !== undefined ? { distance: result.distance } : {}),
               };
               setViolations(prev => [...prev, violation]);
@@ -566,12 +632,10 @@ export const useFaceDetection = (
           consecutiveFailures++;
           addLog(`❌ خطا در حلقه تشخیص (تلاش ${consecutiveFailures}): ${e}`);
           
-          // If too many consecutive failures, try to restart camera
           if (consecutiveFailures >= maxConsecutiveFailures) {
             addLog('❌ تعداد خطاهای متوالی زیاد شد، در حال تلاش برای راه‌اندازی مجدد دوربین...');
             consecutiveFailures = 0;
             
-            // Try to restart camera
             try {
               stopCamera();
               await new Promise(resolve => setTimeout(resolve, 1000));

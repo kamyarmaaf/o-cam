@@ -93,6 +93,14 @@ const Home: React.FC = () => {
                   <ArrowLeft className="h-5 w-5" />
                 </Link>
               )}
+              <Link to="/simple-test" className="bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-2xl font-semibold hover:bg-white hover:text-primary transition-all duration-300 inline-flex items-center justify-center space-x-2 space-x-reverse">
+                <Play className="h-5 w-5" />
+                <span>تست ساده تشخیص چهره</span>
+              </Link>
+              <Link to="/face-test" className="bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-2xl font-semibold hover:bg-white hover:text-primary transition-all duration-300 inline-flex items-center justify-center space-x-2 space-x-reverse">
+                <Play className="h-5 w-5" />
+                <span>تست پیشرفته تشخیص چهره</span>
+              </Link>
               <Link to="/guide" className="bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-2xl font-semibold hover:bg-white hover:text-primary transition-all duration-300 inline-flex items-center justify-center space-x-2 space-x-reverse">
                 <Play className="h-5 w-5" />
                 <span>مشاهده دمو</span>

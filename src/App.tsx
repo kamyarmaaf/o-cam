@@ -18,6 +18,10 @@ import DashboardScores from './pages/DashboardScores';
 import DashboardProfile from './pages/DashboardProfile';
 import ExamEnvironment from './pages/exam/ExamEnvironment';
 import FaceDetectionExam from './pages/exam/FaceDetectionExam';
+import FaceDetectionTest from './pages/FaceDetectionTest';
+import SimpleFaceTest from './pages/SimpleFaceTest';
+import DirectFaceTest from './pages/DirectFaceTest';
+import FixedFaceTest from './pages/FixedFaceTest';
 
 // Teacher-specific pages
 import TeacherStudents from './pages/teacher/TeacherStudents';
@@ -133,6 +137,26 @@ function AppContent() {
         <Route path="/guide" element={
           <Layout>
             <Guide />
+          </Layout>
+        } />
+        <Route path="/face-test" element={
+          <Layout>
+            <FaceDetectionTest />
+          </Layout>
+        } />
+        <Route path="/simple-test" element={
+          <Layout>
+            <SimpleFaceTest />
+          </Layout>
+        } />
+        <Route path="/direct-test" element={
+          <Layout>
+            <DirectFaceTest />
+          </Layout>
+        } />
+        <Route path="/fixed-test" element={
+          <Layout>
+            <FixedFaceTest />
           </Layout>
         } />
         <Route path="/support" element={
